@@ -88,7 +88,8 @@
   bottom: calc(100% + 8px);
   left: 50%;
   transform: translateX(-50%);
-  background: #1a1a1a;
+  background: var(--code-bg);
+  border: 1px solid var(--border);
   padding: 5px 10px;
   border-radius: 5px;
   font-size: 11px;
@@ -96,11 +97,18 @@
   white-space: nowrap;
   pointer-events: none;
   z-index: 9999;
-  color: #e5e7eb;
+  color: var(--text-h);
+  box-shadow: var(--shadow);
+  opacity: 0;
+  transition: opacity 0.15s;
 }
 
-.tt-key { color: #e5e7eb; }
-.tt-op  { color: #9ca3af; }
-.tt-val { color: #e5e7eb; }
-.tt-quote { color: #6b7280; }
-.tt-code { color: #e5e7eb; }
+.logic-node-content:hover .node-tooltip {
+  opacity: 1;
+}
+
+.tt-key   { color: var(--text-h); }
+.tt-op    { color: var(--text); }
+.tt-val   { color: var(--text-h); }
+.tt-quote { color: var(--text); opacity: 0.5; }
+.tt-code  { color: var(--text-h); }

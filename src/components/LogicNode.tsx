@@ -1,16 +1,15 @@
-import { useState } from 'react';
 import { Handle, Position, type NodeProps } from '@xyflow/react';
 import './LogicNode.css';
 
 type NodeData = Record<string, unknown>;
 
 function computeConditionName(data: NodeData): string {
-  const sign       = data.sign as string;
+  const sign        = data.sign as string;
   const displayName = data.displayName as string | undefined;
-  const field      = data.field as string | undefined;
-  const value      = data.value as string | undefined;
-  const valueType  = data.valueType as string | undefined;
-  const expression = data.expression as string | undefined;
+  const field       = data.field as string | undefined;
+  const value       = data.value as string | undefined;
+  const valueType   = data.valueType as string | undefined;
+  const expression  = data.expression as string | undefined;
 
   if (sign === 'CEL') return expression ?? '';
   if (!field && !value) return '';
@@ -61,8 +60,6 @@ function ConditionSubLabel({ data }: { data: NodeData }) {
 }
 
 function LogicNode({ data }: NodeProps) {
-  const [hovered, setHovered] = useState(false);
-
   const sign        = data.sign as string;
   const displayName = data.displayName as string | undefined;
   const nodeType    = data.type as string;
@@ -81,19 +78,12 @@ function LogicNode({ data }: NodeProps) {
     ? (showUserName || hasConditionData ? true : description)
     : name;
 
-  const showTooltip = hovered && (
-    (!isCondition && !!name) || (isCondition && !!generatedName)
-  );
+  const hasTooltip = (!isCondition && !!name) || (isCondition && !!generatedName);
 
   return (
     <>
       <Handle type="target" position={Position.Top} />
-      <div
-        className={`logic-node-content${subLabel ? ' has-name' : ''}`}
-        onMouseEnter={() => setHovered(true)}
-        onMouseLeave={() => setHovered(false)}
-        onDoubleClick={() => setHovered(false)}
-      >
+      <div className={`logic-node-content${subLabel ? ' has-name' : ''}`}>
         <div className="logic-node-label"><span>{topLabel}</span></div>
 
         {subLabel && (
@@ -105,7 +95,7 @@ function LogicNode({ data }: NodeProps) {
           </div>
         )}
 
-        {showTooltip && (
+        {hasTooltip && (
           <div className="node-tooltip">
             {isCondition
               ? <code className="tt-code">{generatedName}</code>

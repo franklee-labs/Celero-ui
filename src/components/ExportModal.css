@@ -37,6 +37,29 @@
   color: var(--text-h);
 }
 
+.export-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.export-copy {
+  padding: 4px 12px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 12px;
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.export-copy:hover {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
 .export-close {
   background: transparent;
   border: none;
@@ -61,6 +84,8 @@
   color: var(--text-h);
   overflow: auto;
   white-space: pre;
+  flex: 1;
+  min-height: 0;
 }
 
 .export-error {

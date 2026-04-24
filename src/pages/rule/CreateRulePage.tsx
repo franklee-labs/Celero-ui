@@ -1,5 +1,6 @@
-import { DragEvent, useRef } from 'react';
+import { type DragEvent, useRef } from 'react';
 import FlowCanvas from '../../components/FlowCanvas';
+import { useTheme } from '../../hooks/useTheme';
 import './CreateRulePage.css';
 
 const RELATION_NODES = [
@@ -15,7 +16,7 @@ const CONDITION_NODES = [
   { type: 'condition', sign: 'GTE',   displayName: '≥',      description: 'greater than or equal' },
   { type: 'condition', sign: 'LT',    displayName: '<',      description: 'less than' },
   { type: 'condition', sign: 'LTE',   displayName: '≤',      description: 'less than or equal' },
-  { type: 'condition', sign: 'CEL',   displayName: 'CEL',    description: 'common expression language' },
+  { type: 'condition', sign: 'CEL',   displayName: 'CEL',    description: 'CEL expression' },
   { type: 'condition', sign: 'REGEX', displayName: '^\\d+$', description: 'regular expression' },
   { type: 'condition', sign: 'IN',    displayName: 'in',     description: 'in list/map' },
   { type: 'condition', sign: 'NIN',   displayName: 'nin',    description: 'not in list/map' },
@@ -25,6 +26,7 @@ export type NodeDef = typeof RELATION_NODES[number] | typeof CONDITION_NODES[num
 
 function CreateRulePage() {
   const dragPayloadRef = useRef<NodeDef | null>(null);
+  const { theme, toggle } = useTheme();
 
   const onDragStart = (e: DragEvent<HTMLDivElement>, node: NodeDef) => {
     dragPayloadRef.current = node;
@@ -57,7 +59,12 @@ function CreateRulePage() {
   return (
     <div className="rule-page">
       <aside className="node-sidebar">
-        <h3>Nodes</h3>
+        <div className="sidebar-header">
+          <h3>Nodes</h3>
+          <button className="theme-toggle" onClick={toggle} title={theme === 'dark' ? 'Dark' : 'Light'}>
+            {theme === 'dark' ? '🌙' : '☀️'}
+          </button>
+        </div>
         <p className="sidebar-hint">Drag nodes to the canvas</p>
         {renderNodeGroup('Logic Node', RELATION_NODES)}
         {renderNodeGroup('Condition Node', CONDITION_NODES, true)}

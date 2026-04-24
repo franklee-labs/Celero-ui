@@ -5,7 +5,7 @@
 }
 
 .node-sidebar {
-  width: 200px;
+  width: 220px;
   flex-shrink: 0;
   background: var(--bg);
   border-right: 1px solid var(--border);
@@ -15,11 +15,31 @@
   gap: 8px;
 }
 
+.sidebar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
 .node-sidebar h3 {
-  margin: 0 0 4px;
+  margin: 0;
   font-size: 14px;
   font-weight: 600;
   color: var(--text-h);
+}
+
+.theme-toggle {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  padding: 2px 4px;
+  border-radius: 4px;
+  line-height: 1;
+}
+
+.theme-toggle:hover {
+  background: var(--border);
 }
 
 .sidebar-hint {
@@ -49,6 +69,19 @@
   flex: 1;
 }
 
+.node-group.scrollable .node-list::-webkit-scrollbar {
+  width: 3px;
+}
+
+.node-group.scrollable .node-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.node-group.scrollable .node-list::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 2px;
+}
+
 .node-group-title {
   margin: 0;
   font-size: 11px;
@@ -61,7 +94,8 @@
 .node-list {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
+  padding-right: 3px; /* 与滚动条宽度一致，保持两组节点等宽 */
 }
 
 .draggable-node {

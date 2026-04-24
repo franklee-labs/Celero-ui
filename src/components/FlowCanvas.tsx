@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState, type DragEvent, type CSSProperties, type MouseEvent, type RefObject } from 'react';
+import { useCallback, useEffect, useRef, useState, type DragEvent, type CSSProperties, type MouseEvent, type RefObject } from 'react';
 import type { NodeDef } from '../pages/rule/CreateRulePage';
 import {
   ReactFlow,
@@ -8,6 +8,7 @@ import {
   Background,
   useNodesState,
   useEdgesState,
+  useStore,
   addEdge,
   type Node,
   type Edge,
@@ -19,30 +20,31 @@ import '@xyflow/react/dist/style.css';
 import LogicNode from './LogicNode';
 import NodeEditModal, { type ConditionData } from './NodeEditModal';
 import ExportModal from './ExportModal';
+import ImportModal from './ImportModal';
 import { buildTreeJson } from './exportTree';
+import { parseImportJson } from './importTree';
+import { NODE_STYLES } from './nodeStyles';
 
 const nodeTypes = { logicNode: LogicNode };
 
-let nodeIdCounter = 1;
+function LockWatcher({ onLockChange }: { onLockChange: (locked: boolean) => void }) {
+  const nodesDraggable = useStore(s => s.nodesDraggable);
+  useEffect(() => {
+    onLockChange(!nodesDraggable);
+  }, [nodesDraggable, onLockChange]);
+  return null;
+}
 
-const NODE_STYLES: Record<string, CSSProperties> = {
-  // relation
-  AND:   { background: 'rgba(30, 64, 175, 0.15)',   border: '3px solid #1e40af', borderRadius: 8, color: '#60a5fa', width: 120, height: 60 },
-  OR:    { background: 'rgba(15, 118, 110, 0.15)',  border: '3px solid #0f766e', borderRadius: 8, color: '#2dd4bf', width: 120, height: 60 },
-  NOT:   { background: 'rgba(153, 27, 27, 0.15)',   border: '3px solid #b91c1c', borderRadius: 8, color: '#f87171', width: 120, height: 60 },
-  // condition pairs (complementary colors)
-  EQ:    { background: 'rgba(59, 130, 246, 0.15)',  border: '2px solid #3b82f6', borderRadius: 8, color: '#60a5fa', width: 120, height: 60 },
-  NEQ:   { background: 'rgba(249, 115, 22, 0.15)',  border: '2px solid #f97316', borderRadius: 8, color: '#fb923c', width: 120, height: 60 },
-  GT:    { background: 'rgba(16, 185, 129, 0.15)',  border: '2px solid #10b981', borderRadius: 8, color: '#34d399', width: 120, height: 60 },
-  LTE:   { background: 'rgba(239, 68, 68, 0.15)',   border: '2px solid #ef4444', borderRadius: 8, color: '#f87171', width: 120, height: 60 },
-  GTE:   { background: 'rgba(6, 182, 212, 0.15)',   border: '2px solid #06b6d4', borderRadius: 8, color: '#67e8f9', width: 120, height: 60 },
-  LT:    { background: 'rgba(236, 72, 153, 0.15)',  border: '2px solid #ec4899', borderRadius: 8, color: '#f472b6', width: 120, height: 60 },
-  IN:    { background: 'rgba(124, 58, 237, 0.15)',  border: '2px solid #7c3aed', borderRadius: 8, color: '#a78bfa', width: 120, height: 60 },
-  NIN:   { background: 'rgba(234, 179, 8, 0.15)',   border: '2px solid #eab308', borderRadius: 8, color: '#fcd34d', width: 120, height: 60 },
-  CEL:   { background: 'rgba(99, 102, 241, 0.15)',  border: '2px solid #6366f1', borderRadius: 8, color: '#818cf8', width: 120, height: 60 },
-  REGEX: { background: 'rgba(100, 116, 139, 0.15)', border: '2px solid #64748b', borderRadius: 8, color: '#94a3b8', width: 120, height: 60 },
+const usedIds = new Set<string>();
+
+const genId = (sign: string): string => {
+  let id: string;
+  do {
+    id = `${sign}-${crypto.randomUUID().replace(/-/g, '').slice(0, 8)}`;
+  } while (usedIds.has(id));
+  usedIds.add(id);
+  return id;
 };
-
 
 type EditingNode =
   | { id: string; kind: 'relation'; sign: string; name: string }
@@ -57,8 +59,14 @@ function FlowCanvas({ dragPayloadRef }: Props) {
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const instanceRef = useRef<ReactFlowInstance | null>(null);
+  const [isLocked, setIsLocked] = useState(false);
   const [editingNode, setEditingNode] = useState<EditingNode | null>(null);
   const [exportState, setExportState] = useState<{ open: boolean; content?: string; error?: string }>({ open: false });
+  const [importState, setImportState] = useState<{ open: boolean; error?: string }>({ open: false });
+
+  const handleLockChange = useCallback((locked: boolean) => {
+    setIsLocked(locked);
+  }, []);
 
   const handleExport = () => {
     const result = buildTreeJson(nodes, edges);
@@ -67,6 +75,19 @@ function FlowCanvas({ dragPayloadRef }: Props) {
     } else {
       setExportState({ open: true, error: result.error });
     }
+  };
+
+  const handleImport = (json: string) => {
+    const result = parseImportJson(json);
+    if (!result.ok) {
+      setImportState({ open: true, error: result.error });
+      return;
+    }
+    usedIds.clear();
+    result.nodes.forEach(n => usedIds.add(n.id));
+    setNodes(result.nodes);
+    setEdges(result.edges);
+    setImportState({ open: false });
   };
 
   const onConnect = useCallback(
@@ -99,7 +120,7 @@ function FlowCanvas({ dragPayloadRef }: Props) {
     setNodes((nds) => [
       ...nds,
       {
-        id: `${payload.sign}-${nodeIdCounter++}`,
+        id: genId(payload.sign),
         type: 'logicNode',
         position,
         data: {
@@ -156,6 +177,7 @@ function FlowCanvas({ dragPayloadRef }: Props) {
         defaultEdgeOptions={{ markerEnd: { type: MarkerType.ArrowClosed } }}
         fitView
       >
+        <LockWatcher onLockChange={handleLockChange} />
         <MiniMap />
         <Controls>
           <ControlButton title="Export tree" onClick={handleExport}>
@@ -163,6 +185,17 @@ function FlowCanvas({ dragPayloadRef }: Props) {
               <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
               <polyline points="17 8 12 3 7 8" />
               <line x1="12" y1="3" x2="12" y2="15" />
+            </svg>
+          </ControlButton>
+          <ControlButton
+            title={isLocked ? 'Unlock to import' : 'Import tree'}
+            onClick={() => { if (!isLocked) setImportState({ open: true }); }}
+            style={{ opacity: isLocked ? 0.35 : 1, cursor: isLocked ? 'not-allowed' : 'pointer' }}
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="7 10 12 15 17 10" />
+              <line x1="12" y1="15" x2="12" y2="3" />
             </svg>
           </ControlButton>
         </Controls>
@@ -176,11 +209,7 @@ function FlowCanvas({ dragPayloadRef }: Props) {
           initialSign={editingNode.sign}
           initialName={editingNode.name}
           onSave={(name, newSign) =>
-            updateNode(
-              editingNode.id,
-              { name, sign: newSign },
-              NODE_STYLES[newSign],
-            )
+            updateNode(editingNode.id, { name, sign: newSign }, NODE_STYLES[newSign])
           }
           onClose={() => setEditingNode(null)}
         />
@@ -204,6 +233,13 @@ function FlowCanvas({ dragPayloadRef }: Props) {
         content={exportState.content}
         error={exportState.error}
         onClose={() => setExportState({ open: false })}
+      />
+
+      <ImportModal
+        open={importState.open}
+        error={importState.error}
+        onConfirm={handleImport}
+        onClose={() => setImportState({ open: false })}
       />
     </div>
   );
