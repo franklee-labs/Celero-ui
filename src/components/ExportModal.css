@@ -1,0 +1,74 @@
+.export-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.export-dialog {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  width: 560px;
+  max-width: 90vw;
+  max-height: 70vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
+.export-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.export-title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-h);
+}
+
+.export-close {
+  background: transparent;
+  border: none;
+  font-size: 14px;
+  color: var(--text);
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 4px;
+  line-height: 1;
+}
+
+.export-close:hover {
+  background: var(--border);
+}
+
+.export-content {
+  margin: 0;
+  padding: 16px 20px;
+  font-family: var(--mono);
+  font-size: 12px;
+  line-height: 1.7;
+  color: var(--text-h);
+  overflow: auto;
+  white-space: pre;
+}
+
+.export-error {
+  margin: 0;
+  padding: 20px;
+  font-family: var(--sans);
+  font-size: 13px;
+  line-height: 1.6;
+  color: #ef4444;
+  white-space: pre-wrap;
+}
