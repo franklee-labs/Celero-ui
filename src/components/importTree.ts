@@ -73,11 +73,18 @@ export function parseImportJson(json: string): ImportResult {
     const type = rest.type as string | undefined;
     const style = (sign && NODE_STYLES[sign]) || (type && NODE_STYLES[type]) || {};
 
+    // Flatten properties into data for condition nodes
+    let data: Record<string, unknown> = rest;
+    if (type === 'condition' && rest.properties && typeof rest.properties === 'object') {
+      const { properties, ...topLevel } = rest;
+      data = { ...topLevel, ...(properties as Record<string, unknown>) };
+    }
+
     nodes.push({
       id,
       type: 'logicNode',
       position: positions.get(id) ?? { x: 0, y: 0 },
-      data: rest as Record<string, unknown>,
+      data,
       style,
     });
 
