@@ -6,6 +6,22 @@ A visual editor for building and exporting the tree-based rule data structures c
 
 celero-ui lets you compose rule trees by dragging nodes onto a canvas, connecting them, and exporting the result as JSON. The exported JSON is directly compatible with the rule engine format expected by celero and celero-go.
 
+## Screenshots
+
+![Editor UI](screenshots/page.png)
+
+The left sidebar lists all available node types. Drag any node onto the canvas, then draw edges between nodes to build the tree.
+
+![Rule tree](screenshots/rule_tree.png)
+
+The canvas renders the tree with colour-coded nodes for each sign — AND (blue), OR (teal), NOT (red), and condition nodes in their respective colours.
+
+| Import | Export |
+| ------ | ------ |
+| ![Import modal](screenshots/import.png) | ![Export panel](screenshots/export.png) |
+
+Paste existing rule JSON into the Import dialog to restore a tree with automatic layout. The Export dialog validates the tree and copies the JSON to your clipboard.
+
 ## Node types
 
 **Logic (relation) nodes** — combine child conditions using boolean logic:
@@ -65,33 +81,94 @@ The exported JSON is a recursive tree. Relation nodes carry a `children` array; 
 
 ### Full example
 
+The tree shown in the screenshots above exports as:
+
 ```json
 {
-  "id": "root",
-  "type": "relation",
+  "id": "AND-b433fcc1",
   "sign": "AND",
+  "type": "relation",
+  "description": "All conditions are true",
   "children": [
     {
-      "id": "cond-age",
+      "id": "EQ-b4380ef9",
+      "sign": "EQ",
       "type": "condition",
-      "sign": "GTE",
-      "cacheable": false,
-      "ignoreAbsence": false,
+      "name": "",
+      "cacheable": true,
+      "ignoreAbsence": true,
       "properties": {
-        "field": "user.age",
-        "value": "18",
-        "valueType": "Number"
+        "description": "equal",
+        "displayName": "==",
+        "field": "status",
+        "value": "active",
+        "valueType": "String",
+        "priority": -10
       }
     },
     {
-      "id": "cond-email",
-      "type": "condition",
-      "sign": "EXISTS",
-      "cacheable": false,
-      "ignoreAbsence": false,
-      "properties": {
-        "field": "user.email"
-      }
+      "id": "OR-d9c065ba",
+      "sign": "OR",
+      "type": "relation",
+      "description": "Any condition is true",
+      "children": [
+        {
+          "id": "GTE-dd7fe727",
+          "sign": "GTE",
+          "type": "condition",
+          "name": "age check",
+          "cacheable": true,
+          "ignoreAbsence": false,
+          "properties": {
+            "description": "greater than or equal",
+            "displayName": "≥",
+            "field": "age",
+            "value": "18",
+            "valueType": "Number",
+            "priority": 3
+          }
+        },
+        {
+          "id": "EQ-f5f25c31",
+          "sign": "EQ",
+          "type": "condition",
+          "name": "",
+          "cacheable": false,
+          "ignoreAbsence": true,
+          "properties": {
+            "description": "equal",
+            "displayName": "==",
+            "field": "identity",
+            "value": "true",
+            "valueType": "Boolean",
+            "priority": 10
+          }
+        }
+      ]
+    },
+    {
+      "id": "NOT-377af4d9",
+      "sign": "NOT",
+      "type": "relation",
+      "description": "Condition is false",
+      "children": [
+        {
+          "id": "EQ-175115d1",
+          "sign": "EQ",
+          "type": "condition",
+          "name": "banned check",
+          "cacheable": false,
+          "ignoreAbsence": false,
+          "properties": {
+            "description": "equal",
+            "displayName": "==",
+            "field": "banned",
+            "value": "true",
+            "valueType": "Boolean",
+            "priority": 0
+          }
+        }
+      ]
     }
   ]
 }
@@ -110,12 +187,13 @@ Each condition sign uses a different set of `properties` fields:
 | `REGEX` | `field`, `value` |
 | `CEL` | `expression` |
 
-All condition nodes also support two optional top-level flags:
+All condition nodes also support these top-level flags (configurable in the Advanced panel):
 
 | Flag | Type | Default | Meaning |
 | ---- | ---- | ------- | ------- |
 | `cacheable` | boolean | `false` | Allow the rule engine to cache this condition's result |
 | `ignoreAbsence` | boolean | `false` | Treat a missing field as if the condition passed |
+| `priority` | integer | `0` | Evaluation priority; valid range is `Integer.MIN_VALUE` (−2 147 483 648) to `Integer.MAX_VALUE` (2 147 483 647). Exported inside `properties`. |
 
 ## Structural constraints
 

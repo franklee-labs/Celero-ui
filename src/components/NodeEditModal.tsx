@@ -19,6 +19,9 @@ const LIST_VALUE_TYPE_OPTS  = ['List', 'Expression'];
 
 const RELATION_SIGNS = ['AND', 'OR', 'NOT'] as const;
 
+const INT_MIN = -2147483648;
+const INT_MAX =  2147483647;
+
 export interface ConditionData {
   field?: string;
   value?: string;
@@ -31,6 +34,7 @@ export interface ConditionData {
   name?: string;
   cacheable?: boolean;
   ignoreAbsence?: boolean;
+  priority?: number;
 }
 
 type RelationProps = {
@@ -54,6 +58,7 @@ type ConditionProps = {
   initialValueType2?: string;
   initialCacheable?: boolean;
   initialIgnoreAbsence?: boolean;
+  initialPriority?: number;
   onSave: (data: ConditionData) => void;
 };
 
@@ -78,6 +83,8 @@ function NodeEditModal(props: Props) {
   const [valueType2, setValueType2]         = useState('List');
   const [cacheable, setCacheable]           = useState(false);
   const [ignoreAbsence, setIgnoreAbsence]   = useState(false);
+  const [priority, setPriority]             = useState('0');
+  const [priorityError, setPriorityError]   = useState('');
   const [advancedOpen, setAdvancedOpen]     = useState(false);
 
   useEffect(() => {
@@ -89,6 +96,8 @@ function NodeEditModal(props: Props) {
       setName(props.initialName);
       setCacheable(props.initialCacheable ?? false);
       setIgnoreAbsence(props.initialIgnoreAbsence ?? false);
+      setPriority(String(props.initialPriority ?? 0));
+      setPriorityError('');
       setAdvancedOpen(false);
       const s = props.sign;
       if (EXPRESSION_ONLY_SIGNS.has(s)) {
@@ -119,12 +128,20 @@ function NodeEditModal(props: Props) {
   const isDualList     = DUAL_LIST_SIGNS.has(s);
   const valueTypeOpts  = VALUE_TYPE_OPTIONS[s];
 
-  const adv = { cacheable, ignoreAbsence };
-
   const handleSave = () => {
     if (props.kind === 'relation') {
       props.onSave(name, sign);
-    } else if (isExprOnly) {
+      return;
+    }
+
+    const p = Number(priority);
+    if (!Number.isInteger(p) || p < INT_MIN || p > INT_MAX) {
+      setPriorityError(`Must be an integer between ${INT_MIN} and ${INT_MAX}.`);
+      return;
+    }
+
+    const adv = { cacheable, ignoreAbsence, priority: p };
+    if (isExprOnly) {
       props.onSave({ expression, name, ...adv });
     } else if (isFieldOnly) {
       props.onSave({ field, name, ...adv });
@@ -234,6 +251,18 @@ function NodeEditModal(props: Props) {
                       <button type="button" className={`bool-btn${ignoreAbsence ? ' active' : ''}`} onClick={() => setIgnoreAbsence(true)}>True</button>
                       <button type="button" className={`bool-btn${!ignoreAbsence ? ' active' : ''}`} onClick={() => setIgnoreAbsence(false)}>False</button>
                     </div>
+                  </div>
+                  <div className="modal-field">
+                    <label htmlFor="node-priority">Priority</label>
+                    <input
+                      id="node-priority"
+                      type="number"
+                      step="1"
+                      value={priority}
+                      onChange={e => { setPriority(e.target.value); setPriorityError(''); }}
+                      onKeyDown={handleKeyDown}
+                    />
+                    {priorityError && <span className="modal-field-error">{priorityError}</span>}
                   </div>
                 </div>
               )}

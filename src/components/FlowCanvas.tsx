@@ -231,6 +231,7 @@ function FlowCanvas({ dragPayloadRef }: Props) {
           initialValueType2={editingNode.data.valueType2}
           initialCacheable={editingNode.data.cacheable === 'true'}
           initialIgnoreAbsence={editingNode.data.ignoreAbsence === 'true'}
+          initialPriority={editingNode.data.priority !== '' && editingNode.data.priority !== undefined ? Number(editingNode.data.priority) : 0}
           onSave={(data: ConditionData) => updateNode(editingNode.id, { ...data })}
           onClose={() => setEditingNode(null)}
         />
